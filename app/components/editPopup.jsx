@@ -1,28 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function AddUserModal({ open, setOpen, addUser }) {
+export default function EditUserModal({ open, setOpen, user, updateUser, deleteUser }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
     role: "",
+    status: "",
   });
 
-  if (!open) return null;
+  useEffect(() => {
+    if (user) {
+      setForm({
+        name: user.name || "",
+        email: user.email || "",
+        role: user.role || "",
+        status: user.status || "active",
+      });
+    }
+  }, [user]);
+
+  if (!open || !user) return null;
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = () => {
-    if (!form.name || !form.email || !form.role) return;
+  const handleSave = () => {
+    if (!form.name || !form.email || !form.role || !form.status) return;
 
-    addUser({
-      ...form,
-      status: "active",
-      joined: new Date().toISOString().split("T")[0],
-    });
+    updateUser(user.id, form);
+    setOpen(false);
+  };
 
-    setForm({ name: "", email: "", role: "" });
+  const handleDelete = () => {
+    deleteUser(user.id);
     setOpen(false);
   };
 
@@ -30,7 +41,6 @@ export default function AddUserModal({ open, setOpen, addUser }) {
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-lg p-6 relative">
 
-        {/* Close */}
         <button
           onClick={() => setOpen(false)}
           className="absolute top-3 right-4 text-gray-400 hover:text-black"
@@ -38,9 +48,9 @@ export default function AddUserModal({ open, setOpen, addUser }) {
           ✕
         </button>
 
-        <h2 className="text-lg font-semibold">Add New User</h2>
+        <h2 className="text-lg font-semibold">Edit User</h2>
         <p className="text-sm text-gray-500 mb-4">
-          Enter the details of the new user.
+          Update the details of the user.
         </p>
 
         {/* Form */}
@@ -100,20 +110,38 @@ export default function AddUserModal({ open, setOpen, addUser }) {
               <option value="Intern Full Stack Developer">Intern Full Stack Developer</option>
               <option value="Software Testing / QA Engineer">Software Testing / QA Engineer</option>
               <option value="Business Development & Innovation Executive">Business Development & Innovation Executive</option>
+            </select>
+          </div>
 
-
+          {/* Status */}
+          <div>
+            <label className="text-sm text-gray-600">Status</label>
+            <select
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              className="w-full bg-gray-100 p-2 rounded-md outline-none mt-1"
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
             </select>
           </div>
 
         </div>
 
-        {/* Button */}
-        <div className="flex justify-end mt-5">
+        {/* Buttons */}
+        <div className="flex justify-between mt-5">
           <button
-            onClick={handleSubmit}
+            onClick={handleDelete}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600"
+          >
+            Delete
+          </button>
+          <button
+            onClick={handleSave}
             className="bg-black text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
           >
-            Save User
+            Save
           </button>
         </div>
       </div>

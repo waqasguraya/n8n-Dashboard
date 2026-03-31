@@ -5,10 +5,15 @@ import Image from "next/image";
 import { supabase } from "./lib/supabase";
 import User from "../user.svg";
 import Popup from "./components/popup";
+import EditPopup from "./components/editPopup";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [users, setUsers] = useState([]);
+
+  // Jira integration state
+  const [jiraUser, setJiraUser] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -20,6 +25,19 @@ export default function Home() {
       }
     };
     fetchUsers();
+
+    // Fetch Jira user data
+    const fetchJiraUser = async () => {
+      try {
+        const res = await fetch("/api/jira");
+        if (!res.ok) throw new Error("Failed to fetch Jira data");
+        const data = await res.json();
+        setJiraUser(data);
+      } catch (err) {
+        console.error("Jira fetch error:", err);
+      }
+    };
+    fetchJiraUser();
   }, []);
 
   const addUser = async (newUser) => {
@@ -43,6 +61,17 @@ export default function Home() {
     setUsers((prev) => prev.filter((user) => user.id !== userId));
   };
 
+  const updateUser = async (userId, updatedData) => {
+    const { error } = await supabase.from("Users").update(updatedData).eq('id', userId);
+    if (error) {
+      console.error("Update user error:", error);
+      return;
+    }
+    setUsers((prev) =>
+      prev.map((user) => (user.id === userId ? { ...user, ...updatedData } : user))
+    );
+  };
+
   const totalUsers = users.length;
   const activeUsers = users.filter((u) => u.status === "active").length;
   const inactiveUsers = users.filter((u) => u.status === "inactive").length;
@@ -51,6 +80,7 @@ export default function Home() {
     <div className="bg-gray-100 min-h-screen p-4 sm:p-10">
       <div className="max-w-6xl mx-auto">
 
+        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-2">
             <Image src={User} alt="user" width={40} height={40} />
@@ -59,6 +89,11 @@ export default function Home() {
               <p className="text-gray-500 text-xs sm:text-sm mt-1">
                 Manage and add users to your system
               </p>
+              {jiraUser && (
+                <p className="text-green-600 text-xs sm:text-sm mt-1">
+                  Jira: {jiraUser.displayName} ({jiraUser.emailAddress})
+                </p>
+              )}
             </div>
           </div>
 
@@ -70,24 +105,21 @@ export default function Home() {
           </button>
         </div>
 
+        {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-6">
           {[
             { title: "Total Users", value: totalUsers },
             { title: "Active Users", value: activeUsers },
             { title: "Inactive Users", value: inactiveUsers },
           ].map((item, i) => (
-            <div
-              key={i}
-              className="bg-white p-4 sm:p-5 rounded-2xl shadow"
-            >
+            <div key={i} className="bg-white p-4 sm:p-5 rounded-2xl shadow">
               <p className="text-gray-500 text-xs sm:text-sm">{item.title}</p>
-              <p className="text-xl sm:text-2xl font-semibold mt-2">
-                {item.value}
-              </p>
+              <p className="text-xl sm:text-2xl font-semibold mt-2">{item.value}</p>
             </div>
           ))}
         </div>
 
+        {/* Users Table */}
         <div className="bg-white mt-6 rounded-2xl shadow overflow-x-auto">
           <table className="min-w-[600px] w-full text-sm">
             <thead className="bg-gray-50 text-gray-600">
@@ -118,8 +150,13 @@ export default function Home() {
                     </span>
                   </td>
                   <td className="px-4 sm:px-6 py-4">{user.joined}</td>
-                  <td className="px-4 sm:px-6 py-4 text-red-500 cursor-pointer hover:scale-y-110 transition" onClick={() => deleteUser(user.id)}>
-                    🗑
+                  <td className="px-4 sm:px-6 py-4 flex gap-2">
+                    <button
+                      onClick={() => setEditingUser(user)}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      ✏️
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -128,6 +165,14 @@ export default function Home() {
         </div>
 
         <Popup open={open} setOpen={setOpen} addUser={addUser} />
+
+        <EditPopup
+          open={editingUser !== null}
+          setOpen={() => setEditingUser(null)}
+          user={editingUser}
+          updateUser={updateUser}
+          deleteUser={deleteUser}
+        />
 
       </div>
     </div>
