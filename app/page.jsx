@@ -28,11 +28,19 @@ export default function Home() {
       console.error("Insert user error:", error);
       return;
     }
-    // Refetch users to ensure the list is updated
     const { data: updatedData, error: fetchError } = await supabase.from("Users").select("*");
     if (!fetchError) {
       setUsers(updatedData);
     }
+  };
+
+  const deleteUser = async (userId) => {
+    const { error } = await supabase.from("Users").delete().eq('id', userId);
+    if (error) {
+      console.error("Delete user error:", error);
+      return;
+    }
+    setUsers((prev) => prev.filter((user) => user.id !== userId));
   };
 
   const totalUsers = users.length;
@@ -43,10 +51,9 @@ export default function Home() {
     <div className="bg-gray-100 min-h-screen p-4 sm:p-10">
       <div className="max-w-6xl mx-auto">
 
-        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-2">
-            <Image src={User} alt="user" width={30} height={30} />
+            <Image src={User} alt="user" width={40} height={40} />
             <div>
               <h1 className="text-xl sm:text-3xl font-bold">User Dashboard</h1>
               <p className="text-gray-500 text-xs sm:text-sm mt-1">
@@ -111,7 +118,7 @@ export default function Home() {
                     </span>
                   </td>
                   <td className="px-4 sm:px-6 py-4">{user.joined}</td>
-                  <td className="px-4 sm:px-6 py-4 text-red-500 cursor-pointer ">
+                  <td className="px-4 sm:px-6 py-4 text-red-500 cursor-pointer hover:scale-y-110 transition" onClick={() => deleteUser(user.id)}>
                     🗑
                   </td>
                 </tr>
