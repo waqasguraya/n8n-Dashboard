@@ -1,5 +1,3 @@
-
-
 import { useState } from "react";
 
 export default function AddUserModal({ open, setOpen, addUser }) {
@@ -14,6 +12,7 @@ export default function AddUserModal({ open, setOpen, addUser }) {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
   const handleSubmit = () => {
     if (!form.name || !form.email || !form.role) return;
 
@@ -29,7 +28,6 @@ export default function AddUserModal({ open, setOpen, addUser }) {
 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-
       <div className="bg-white w-full max-w-md rounded-2xl shadow-lg p-6 relative">
 
         {/* Close */}
@@ -48,6 +46,7 @@ export default function AddUserModal({ open, setOpen, addUser }) {
         {/* Form */}
         <div className="space-y-4">
 
+          {/* Name */}
           <div>
             <label className="text-sm text-gray-600">Name</label>
             <input
@@ -60,6 +59,7 @@ export default function AddUserModal({ open, setOpen, addUser }) {
             />
           </div>
 
+          {/* Email */}
           <div>
             <label className="text-sm text-gray-600">Email</label>
             <input
@@ -72,16 +72,36 @@ export default function AddUserModal({ open, setOpen, addUser }) {
             />
           </div>
 
+          {/* Role (Dropdown) */}
           <div>
             <label className="text-sm text-gray-600">Role</label>
-            <input
+            <select
               name="role"
               value={form.role}
               onChange={handleChange}
-              type="text"
-              placeholder="Admin"
               className="w-full bg-gray-100 p-2 rounded-md outline-none mt-1"
-            />
+            >
+              <option value="">Select role</option>
+              <option value="Intern Web Developer">Intern Web Developer</option>
+              <option value="Admin">Admin</option>
+              <option value="Frontend Developer">Frontend Developer</option>
+              <option value="Backend Developer">Backend Developer</option>
+              <option value="Intern Backend Developer">Intern Backend Developer</option>
+              <option value="Intern Frontend Developer">Intern Frontend Developer</option>
+              <option value="HR and Sales Support">HR and Sales Support</option>
+              <option value="CEO">CEO</option>
+              <option value="Runner (Office Boy)">Runner (Office Boy)</option>
+              <option value="Trainee Frontend Developer">Trainee Frontend Developer</option>
+              <option value="Accountant">Accountant</option>
+              <option value="Chief Technical Officer">Chief Technical Officer</option>
+              <option value="Backend Developer / Technical Officer">Backend Developer / Technical Officer</option>
+              <option value="Full Stack Developer">Full Stack Developer</option>
+              <option value="Intern Full Stack Developer">Intern Full Stack Developer</option>
+              <option value="Sales and Admin Lead (Director)">Sales and Admin Lead (Director)</option>
+              <option value="Technical Lead / Scrum Master">Technical Lead / Scrum Master</option>
+
+
+            </select>
           </div>
 
         </div>
