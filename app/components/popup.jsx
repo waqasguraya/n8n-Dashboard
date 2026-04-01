@@ -67,24 +67,24 @@ export default function AddUserModal({ open, setOpen }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
       
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-[fadeIn_.25s_ease]">
 
         {/* 🔥 Gradient Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-5 text-white">
-          <h2 className="text-xl font-semibold">Add New User</h2>
-          <p className="text-sm opacity-90">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-5 text-white">
+          <h2 className="text-lg sm:text-xl font-semibold">Add New User</h2>
+          <p className="text-xs sm:text-sm opacity-90">
             Create a new team member
           </p>
         </div>
 
-        <div className="p-6 relative">
+        <div className="p-4 sm:p-6 relative">
 
           {/* Close */}
           <button
             onClick={() => setOpen(false)}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-lg"
+            className="absolute top-3 sm:top-4 right-3 sm:right-4 text-gray-400 hover:text-gray-700 text-lg"
           >
             ✕
           </button>
@@ -102,7 +102,7 @@ export default function AddUserModal({ open, setOpen }) {
                   value={form.name}
                   onChange={handleChange}
                   placeholder="John Doe"
-                  className="w-full py-2 outline-none"
+                  className="w-full py-2 outline-none text-sm sm:text-base"
                 />
               </div>
             </div>
@@ -117,7 +117,7 @@ export default function AddUserModal({ open, setOpen }) {
                   value={form.email}
                   onChange={handleChange}
                   placeholder="john@example.com"
-                  className="w-full py-2 outline-none"
+                  className="w-full py-2 outline-none text-sm sm:text-base"
                 />
               </div>
             </div>
@@ -131,7 +131,7 @@ export default function AddUserModal({ open, setOpen }) {
                   name="role"
                   value={form.role}
                   onChange={handleChange}
-                  className="w-full py-2 outline-none bg-transparent"
+                  className="w-full py-2 outline-none bg-transparent text-sm sm:text-base"
                 >
                   <option value="">Select role</option>
                   <option>Manager</option>
@@ -147,22 +147,19 @@ export default function AddUserModal({ open, setOpen }) {
 
           {/* Buttons */}
           <div className="flex justify-end gap-3 mt-6">
-
             <button
               onClick={() => setOpen(false)}
-              className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition text-sm sm:text-base"
             >
               Cancel
             </button>
-
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md hover:opacity-90 transition active:scale-95 disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition disabled:opacity-50 text-sm sm:text-base"
             >
-              {loading ? "Creating..." : "Save User"}
+              {loading ? "Creating..." : "Create User"}
             </button>
-
           </div>
         </div>
       </div>
