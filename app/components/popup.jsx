@@ -143,11 +143,19 @@ export default function AddUserModal({ open, setOpen }) {
                 >
                   <option value="">Select role</option>
                   <option>Manager</option>
+                  <option>HR & Accountant</option>
                   <option>Technical Lead</option>
-                  <option>Frontend Developer</option>
-                  <option>Backend Developer</option>
-                  <option>UI/UX Designer</option>
+                  <option>Web Developer</option>
                   <option>Full Stack Developer</option>
+                  <option>Frontend Developer</option>
+                  <option>Intern Frontend Developer</option>
+                  <option>Backend Developer</option>
+                  <option>Intern Backend Developer</option>
+                  <option>UI/UX Designer</option>
+                  <option>Graphic Designer</option>
+                  <option>Go (Golang) Developer</option>
+                  <option>Software Testing / QA Engineer</option>
+                  <option>Business Development & Innovation Executive</option>
                 </select>
               </div>
             </div>
