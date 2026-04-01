@@ -60,3 +60,40 @@ export async function POST(request) {
     return Response.json({ error: "Failed to create Jira user" }, { status: 500 });
   }
 }
+
+export async function PUT(request) {
+  const token = process.env.NEXT_PUBLIC_JIRA_API_TOKEN;
+  const baseUrl = process.env.NEXT_PUBLIC_JIRA_BASE_URL;
+
+  try {
+    const body = await request.json();
+    const { accountId, username, email, name } = body;
+
+    const userData = {
+      name: username,
+      emailAddress: email,
+      displayName: name,
+    };
+
+    const response = await fetch(`${baseUrl}/rest/api/2/user?accountId=${accountId}`, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(userData)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return Response.json({ error: `Failed to update user: Status ${response.status}, ${errorText}` }, { status: response.status });
+    }
+
+    const data = await response.json();
+
+    return Response.json({ success: true, data });
+  } catch (error) {
+    return Response.json({ error: "Failed to update Jira user" }, { status: 500 });
+  }
+}
