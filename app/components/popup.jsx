@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../lib/supabase.js";
+import { getSupabaseClient } from "../lib/supabase.js";
 
 export default function AddUserModal({ open, setOpen }) {
   const [form, setForm] = useState({
@@ -27,10 +27,12 @@ export default function AddUserModal({ open, setOpen }) {
     setLoading(true);
 
     try {
-      if (!supabase) {
-        alert("Database connection not available");
+      if (!form.name || !form.email || !form.role) {
+        alert("Please fill all fields");
         return;
       }
+
+      setLoading(true);
 
       const res = await fetch("/api/jira", {
         method: "POST",
@@ -45,6 +47,7 @@ export default function AddUserModal({ open, setOpen }) {
       const data = await res.json();
 
       if (data.success) {
+        const supabase = getSupabaseClient();
         const { error } = await supabase.from("Users").insert([
           {
             name: form.name,

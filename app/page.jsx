@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "./lib/supabase.js";
+import { getSupabaseClient } from "./lib/supabase.js";
 import AddUserModal from "./components/popup.jsx";
 
 export default function Home() {
@@ -13,17 +13,17 @@ export default function Home() {
 
   useEffect(() => {
     const fetchUsers = async () => {
-      if (!supabase) {
-        console.error("Supabase client not initialized");
-        return;
-      }
+      try {
+        const supabase = getSupabaseClient();
+        const { data, error } = await supabase.from("Users").select("*");
 
-      const { data, error } = await supabase.from("Users").select("*");
-
-      if (error) {
-        console.error("Error fetching users:", error);
-      } else {
-        setUsers(data || []);
+        if (error) {
+          console.error("Error fetching users:", error);
+        } else {
+          setUsers(data || []);
+        }
+      } catch (error) {
+        console.error("Failed to initialize Supabase client:", error);
       }
     };
 
@@ -211,12 +211,9 @@ function EditUserModal({ open, setOpen, user, updateUser, deleteUser }) {
   };
 
   const handleSave = async () => {
-    if (!supabase) {
-      alert("Database connection not available");
-      return;
-    }
-
     try {
+      const supabase = getSupabaseClient();
+
       // Update in Supabase
       const { error } = await supabase
         .from("Users")
@@ -261,12 +258,9 @@ function EditUserModal({ open, setOpen, user, updateUser, deleteUser }) {
   };
 
   const handleDelete = async () => {
-    if (!supabase) {
-      alert("Database connection not available");
-      return;
-    }
-
     try {
+      const supabase = getSupabaseClient();
+
       // Delete from Supabase
       const { error } = await supabase
         .from("Users")
