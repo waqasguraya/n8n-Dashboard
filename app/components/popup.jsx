@@ -27,6 +27,11 @@ export default function AddUserModal({ open, setOpen }) {
     setLoading(true);
 
     try {
+      if (!supabase) {
+        alert("Database connection not available");
+        return;
+      }
+
       const res = await fetch("/api/jira", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

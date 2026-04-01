@@ -13,6 +13,11 @@ export default function Home() {
 
   useEffect(() => {
     const fetchUsers = async () => {
+      if (!supabase) {
+        console.error("Supabase client not initialized");
+        return;
+      }
+
       const { data, error } = await supabase.from("Users").select("*");
 
       if (error) {
@@ -206,6 +211,11 @@ function EditUserModal({ open, setOpen, user, updateUser, deleteUser }) {
   };
 
   const handleSave = async () => {
+    if (!supabase) {
+      alert("Database connection not available");
+      return;
+    }
+
     try {
       // Update in Supabase
       const { error } = await supabase
@@ -251,6 +261,11 @@ function EditUserModal({ open, setOpen, user, updateUser, deleteUser }) {
   };
 
   const handleDelete = async () => {
+    if (!supabase) {
+      alert("Database connection not available");
+      return;
+    }
+
     try {
       // Delete from Supabase
       const { error } = await supabase
