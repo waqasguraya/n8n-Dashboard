@@ -12,9 +12,6 @@ export default function Home() {
   const [editingUser, setEditingUser] = useState(null);
   const [users, setUsers] = useState([]);
 
-  // Jira integration state
-  const [jiraUser, setJiraUser] = useState(null);
-
   useEffect(() => {
     const fetchUsers = async () => {
       const { data, error } = await supabase.from("Users").select("*");
@@ -25,19 +22,6 @@ export default function Home() {
       }
     };
     fetchUsers();
-
-    // Fetch Jira user data
-    const fetchJiraUser = async () => {
-      try {
-        const res = await fetch("/api/jira");
-        if (!res.ok) throw new Error("Failed to fetch Jira data");
-        const data = await res.json();
-        setJiraUser(data);
-      } catch (err) {
-        console.error("Jira fetch error:", err);
-      }
-    };
-    fetchJiraUser();
   }, []);
 
   const addUser = async (newUser) => {
@@ -45,6 +29,30 @@ export default function Home() {
     if (error) {
       console.error("Insert user error:", error);
       return;
+    }
+    // Create user in Jira
+    try {
+      const jiraRes = await fetch('/api/jira', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newUser),
+      });
+      if (!jiraRes.ok) {
+        const errorText = await jiraRes.text();
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = errorText;
+        }
+        console.error("Jira create user error:", error);
+      } else {
+        console.log("User created in Jira successfully");
+      }
+    } catch (err) {
+      console.error("Jira fetch error:", err);
     }
     const { data: updatedData, error: fetchError } = await supabase.from("Users").select("*");
     if (!fetchError) {
@@ -89,11 +97,6 @@ export default function Home() {
               <p className="text-gray-500 text-xs sm:text-sm mt-1">
                 Manage and add users to your system
               </p>
-              {jiraUser && (
-                <p className="text-green-600 text-xs sm:text-sm mt-1">
-                  Jira: {jiraUser.displayName} ({jiraUser.emailAddress})
-                </p>
-              )}
             </div>
           </div>
 

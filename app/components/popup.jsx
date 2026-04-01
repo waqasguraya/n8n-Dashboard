@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PassThrough } from "stream";
 
 export default function AddUserModal({ open, setOpen, addUser }) {
   const [form, setForm] = useState({
@@ -13,18 +14,31 @@ export default function AddUserModal({ open, setOpen, addUser }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = () => {
-    if (!form.name || !form.email || !form.role) return;
+ const handleSubmit = async () => {
+  const payload = {
+    username: form.name,
+    email: form.email,
+    name: form.name,
 
-    addUser({
-      ...form,
-      status: "active",
-      joined: new Date().toISOString().split("T")[0],
-    });
-
-    setForm({ name: "", email: "", role: "" });
-    setOpen(false);
+    // If you want to send role, add: role: form.role
   };
+  try {
+    const res = await fetch('/api/jira', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('User created successfully!');
+      setOpen(false);
+    } else {
+      alert('Failed to create user: ' + (data.error || 'Unknown error'));
+    }
+  } catch (err) {
+    alert('Failed to create user: ' + err.message);
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
@@ -100,8 +114,6 @@ export default function AddUserModal({ open, setOpen, addUser }) {
               <option value="Intern Full Stack Developer">Intern Full Stack Developer</option>
               <option value="Software Testing / QA Engineer">Software Testing / QA Engineer</option>
               <option value="Business Development & Innovation Executive">Business Development & Innovation Executive</option>
-
-
             </select>
           </div>
 
