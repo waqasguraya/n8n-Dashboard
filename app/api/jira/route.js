@@ -1,6 +1,6 @@
 export async function GET() {
-  const email = process.env.JIRA_EMAIL;
-  const token = process.env.JIRA_API_TOKEN;
+  const email = process.env.NEXT_PUBLIC_JIRA_EMAIL;
+  const token = process.env.NEXT_PUBLIC_JIRA_API_TOKEN;
   const baseUrl = process.env.NEXT_PUBLIC_JIRA_BASE_URL;
 
   const auth = Buffer.from(`${email}:${token}`).toString("base64");
@@ -54,6 +54,7 @@ export async function POST(request) {
     }
 
     const data = await response.json();
+
     return Response.json({ success: true, data });
   } catch (error) {
     return Response.json({ error: "Failed to create Jira user" }, { status: 500 });

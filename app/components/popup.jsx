@@ -1,12 +1,16 @@
-import { useState } from "react";
-import { PassThrough } from "stream";
+"use client";
 
-export default function AddUserModal({ open, setOpen, addUser }) {
+import { useState } from "react";
+import { supabase } from "../lib/supabase.js";
+
+export default function AddUserModal({ open, setOpen }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
     role: "",
   });
+
+  const [loading, setLoading] = useState(false);
 
   if (!open) return null;
 
@@ -14,47 +18,75 @@ export default function AddUserModal({ open, setOpen, addUser }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
- const handleSubmit = async () => {
-  const payload = {
-    username: form.name,
-    email: form.email,
-    name: form.name,
-
-    // If you want to send role, add: role: form.role
-  };
-  try {
-    const res = await fetch('/api/jira', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (data.success) {
-      alert('User created successfully!');
-      setOpen(false);
-    } else {
-      alert('Failed to create user: ' + (data.error || 'Unknown error'));
+  const handleSubmit = async () => {
+    if (!form.name || !form.email || !form.role) {
+      alert("Please fill all fields");
+      return;
     }
-  } catch (err) {
-    alert('Failed to create user: ' + err.message);
-  }
-};
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/jira", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: form.name,
+          email: form.email,
+          name: form.name,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        const { error } = await supabase.from("Users").insert([
+          {
+            name: form.name,
+            email: form.email,
+            role: form.role,
+            status: "active",
+            joined: new Date().toISOString(),
+          },
+        ]);
+
+        if (error) throw error;
+
+        alert("User created successfully!");
+        setOpen(false);
+
+        // Reset form
+        setForm({ name: "", email: "", role: "" });
+      } else {
+        alert(data.error || "Failed to create user");
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-lg p-6 relative">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+      
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 relative animate-scaleIn">
 
-        {/* Close */}
+        {/* Close Button */}
         <button
           onClick={() => setOpen(false)}
-          className="absolute top-3 right-4 text-gray-400 hover:text-black"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-lg"
         >
           ✕
         </button>
 
-        <h2 className="text-lg font-semibold">Add New User</h2>
-        <p className="text-sm text-gray-500 mb-4">
-          Enter the details of the new user.
+        {/* Header */}
+        <h2 className="text-xl font-semibold text-gray-800">
+          Add New User
+        </h2>
+        <p className="text-sm text-gray-500 mb-5">
+          Fill in the details to create a new user
         </p>
 
         {/* Form */}
@@ -67,9 +99,8 @@ export default function AddUserModal({ open, setOpen, addUser }) {
               name="name"
               value={form.name}
               onChange={handleChange}
-              type="text"
               placeholder="John Doe"
-              className="w-full bg-gray-100 p-2 rounded-md outline-none mt-1"
+              className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
             />
           </div>
 
@@ -80,53 +111,50 @@ export default function AddUserModal({ open, setOpen, addUser }) {
               name="email"
               value={form.email}
               onChange={handleChange}
-              type="email"
               placeholder="john@example.com"
-              className="w-full bg-gray-100 p-2 rounded-md outline-none mt-1"
+              className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
             />
           </div>
 
-          {/* Role (Dropdown) */}
+          {/* Role */}
           <div>
             <label className="text-sm text-gray-600">Role</label>
             <select
               name="role"
               value={form.role}
               onChange={handleChange}
-              className="w-full bg-gray-100 p-2 rounded-md outline-none mt-1"
+              className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
             >
               <option value="">Select role</option>
-              <option value="Manager">Manager</option>
-              <option value="Technical Lead">Technical Lead</option>
-              <option value="Frontend Developer">Frontend Developer</option>
-              <option value="Intern Frontend Developer">Intern Frontend Developer</option>
-              <option value="Backend Developer">Backend Developer</option>
-              <option value="Intern Backend Developer">Intern Backend Developer</option>
-              <option value="HR and Accountant">HR and Accountant</option>
-              <option value="Web Developer">Web Developer</option>
-              <option value="Intern Web Developer">Intern Web Developer</option>
-              <option value="Graphic Designer">Graphic Designer</option>
-              <option value="Go (Golang) Developer">Go (Golang) Developer</option>
-              <option value="UI/UX Designer">UI/UX Designer</option>
-              <option value="Intern UI/UX Designer">Intern UI/UX Designer</option>
-              <option value="Backend Developer / Technical Officer">Backend Developer / Technical Officer</option>
-              <option value="Full Stack Developer">Full Stack Developer</option>
-              <option value="Intern Full Stack Developer">Intern Full Stack Developer</option>
-              <option value="Software Testing / QA Engineer">Software Testing / QA Engineer</option>
-              <option value="Business Development & Innovation Executive">Business Development & Innovation Executive</option>
+              <option>Manager</option>
+              <option>Technical Lead</option>
+              <option>Frontend Developer</option>
+              <option>Backend Developer</option>
+              <option>UI/UX Designer</option>
+              <option>Full Stack Developer</option>
             </select>
           </div>
-
         </div>
 
-        {/* Button */}
-        <div className="flex justify-end mt-5">
+        {/* Footer Buttons */}
+        <div className="flex justify-end gap-3 mt-6">
+
           <button
-            onClick={handleSubmit}
-            className="bg-black text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
+            onClick={() => setOpen(false)}
+            className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
           >
-            Save User
+            Cancel
           </button>
+
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition disabled:opacity-50 active:scale-95"
+          >
+            {loading ? "Creating..." : "Save User"}
+          </button>
+
         </div>
       </div>
     </div>

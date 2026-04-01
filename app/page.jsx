@@ -1,183 +1,214 @@
 "use client";
-
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import { supabase } from "./lib/supabase";
-import User from "../user.svg";
-import Popup from "./components/popup";
-import EditPopup from "./components/editPopup";
+import { supabase } from "./lib/supabase.js";
+import AddUserModal from "./components/popup.jsx";
 
 export default function Home() {
-  const [open, setOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
   const [users, setUsers] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const { data, error } = await supabase.from("Users").select("*");
+      const { data, error } = await supabase.from('Users').select('*');
       if (error) {
-        console.error("Fetch users error:", error);
+        console.error('Error fetching users:', error);
       } else {
-        setUsers(data);
+        setUsers(data || []);
       }
     };
     fetchUsers();
   }, []);
 
-  const addUser = async (newUser) => {
-    const { data, error } = await supabase.from("Users").insert([newUser]);
-    if (error) {
-      console.error("Insert user error:", error);
-      return;
-    }
-    // Create user in Jira
-    try {
-      const jiraRes = await fetch('/api/jira', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newUser),
-      });
-      if (!jiraRes.ok) {
-        const errorText = await jiraRes.text();
-        let error;
-        try {
-          error = JSON.parse(errorText);
-        } catch {
-          error = errorText;
-        }
-        console.error("Jira create user error:", error);
-      } else {
-        console.log("User created in Jira successfully");
-      }
-    } catch (err) {
-      console.error("Jira fetch error:", err);
-    }
-    const { data: updatedData, error: fetchError } = await supabase.from("Users").select("*");
-    if (!fetchError) {
-      setUsers(updatedData);
-    }
+  const updateUser = (id, updatedData) => {
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...updatedData } : u)));
   };
 
-  const deleteUser = async (userId) => {
-    const { error } = await supabase.from("Users").delete().eq('id', userId);
-    if (error) {
-      console.error("Delete user error:", error);
-      return;
-    }
-    setUsers((prev) => prev.filter((user) => user.id !== userId));
+  const deleteUser = (id) => {
+    setUsers((prev) => prev.filter((u) => u.id !== id));
   };
 
-  const updateUser = async (userId, updatedData) => {
-    const { error } = await supabase.from("Users").update(updatedData).eq('id', userId);
-    if (error) {
-      console.error("Update user error:", error);
-      return;
-    }
-    setUsers((prev) =>
-      prev.map((user) => (user.id === userId ? { ...user, ...updatedData } : user))
-    );
+  const addUser = (newUser) => {
+    setUsers((prev) => [...prev, { id: Date.now(), ...newUser }]);
   };
-
-  const totalUsers = users.length;
-  const activeUsers = users.filter((u) => u.status === "active").length;
-  const inactiveUsers = users.filter((u) => u.status === "inactive").length;
 
   return (
-    <div className="bg-gray-100 min-h-screen p-4 sm:p-10">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-5xl mx-auto">
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Image src={User} alt="user" width={40} height={40} />
-            <div>
-              <h1 className="text-xl sm:text-3xl font-bold">User Dashboard</h1>
-              <p className="text-gray-500 text-xs sm:text-sm mt-1">
-                Manage and add users to your system
-              </p>
-            </div>
-          </div>
+        <div className="flex justify-between items-center mb-6">
+          
+          <h1 className="text-2xl font-bold text-gray-800">Users Dashboard</h1>
 
           <button
             onClick={() => setOpen(true)}
-            className="w-full sm:w-auto bg-black text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition"
+            className="bg-indigo-600 text-white px-5 py-2 rounded-xl shadow hover:bg-indigo-700 transition"
           >
-            Add New User
+            + Add User
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-6">
-          {[
-            { title: "Total Users", value: totalUsers },
-            { title: "Active Users", value: activeUsers },
-            { title: "Inactive Users", value: inactiveUsers },
-          ].map((item, i) => (
-            <div key={i} className="bg-white p-4 sm:p-5 rounded-2xl shadow">
-              <p className="text-gray-500 text-xs sm:text-sm">{item.title}</p>
-              <p className="text-xl sm:text-2xl font-semibold mt-2">{item.value}</p>
-            </div>
+        <div className="grid gap-4">
+          {users.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              onEdit={() => {
+                setSelectedUser(user);
+                setEditOpen(true);
+              }}
+            />
           ))}
         </div>
+      </div>
 
-        {/* Users Table */}
-        <div className="bg-white mt-6 rounded-2xl shadow overflow-x-auto">
-          <table className="min-w-[600px] w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                <th className="text-left px-4 sm:px-6 py-3">Name</th>
-                <th className="text-left px-4 sm:px-6 py-3">Email</th>
-                <th className="text-left px-4 sm:px-6 py-3">Role</th>
-                <th className="text-left px-4 sm:px-6 py-3">Status</th>
-                <th className="text-left px-4 sm:px-6 py-3">Joined</th>
-                <th className="text-left px-4 sm:px-6 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user, i) => (
-                <tr key={i} className="border-t border-gray-200">
-                  <td className="px-4 sm:px-6 py-4">{user.name}</td>
-                  <td className="px-4 sm:px-6 py-4">{user.email}</td>
-                  <td className="px-4 sm:px-6 py-4">{user.role}</td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <span
-                      className={`text-xs px-2 sm:px-3 py-1 rounded-full ${
-                        user.status === "active"
-                          ? "bg-black text-white"
-                          : "bg-gray-200 text-gray-600"
-                      }`}
-                    >
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4">{user.joined}</td>
-                  <td className="px-4 sm:px-6 py-4 flex gap-2">
-                    <button
-                      onClick={() => setEditingUser(user)}
-                      className="text-blue-500 hover:text-blue-700"
-                    >
-                      ✏️
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <Popup open={open} setOpen={setOpen} addUser={addUser} />
-
-        <EditPopup
-          open={editingUser !== null}
-          setOpen={() => setEditingUser(null)}
-          user={editingUser}
+      {editOpen && (
+        <EditUserModal
+          open={editOpen}
+          setOpen={setEditOpen}
+          user={selectedUser}
           updateUser={updateUser}
           deleteUser={deleteUser}
         />
+      )}
 
+      {open && (
+        <AddUserModal
+          open={open}
+          setOpen={setOpen}
+          addUser={addUser}
+        />
+      )}
+    </div>
+  );
+}
+
+function UserCard({ user, onEdit }) {
+  return (
+    <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-5 flex items-center gap-4 border border-gray-100">
+      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-semibold text-lg">
+        {user.name.charAt(0)}
+      </div>
+
+      <div className="flex-1">
+        <h3 className="text-lg font-semibold text-gray-800">{user.name}</h3>
+        <p className="text-sm text-gray-500">{user.email}</p>
+        <p className="text-xs text-gray-400 mt-1">{user.role}</p>
+      </div>
+
+      <button
+        onClick={onEdit}
+        className="px-4 py-2 text-sm rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
+      >
+        Edit
+      </button>
+    </div>
+  );
+}
+
+function EditUserModal({ open, setOpen, user, updateUser, deleteUser }) {
+  const [form, setForm] = useState({ name: "", email: "", role: "", status: "" });
+
+  useEffect(() => {
+    if (user) {
+      setForm({
+        name: user.name || "",
+        email: user.email || "",
+        role: user.role || "",
+        status: user.status || "active",
+      });
+    }
+  }, [user]);
+
+  if (!open || !user) return null;
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = () => {
+    updateUser(user.id, form);
+    setOpen(false);
+  };
+
+  const handleDelete = () => {
+    deleteUser(user.id);
+    setOpen(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 relative animate-scaleIn">
+
+        <button
+          onClick={() => setOpen(false)}
+          className="absolute top-3 right-4 text-gray-400 hover:text-black"
+        >
+          ✕
+        </button>
+
+        <h2 className="text-xl font-semibold text-gray-800">Edit User</h2>
+        <p className="text-sm text-gray-500 mb-4">Update user details</p>
+
+        <div className="space-y-4">
+          <input
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="Name"
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
+
+          <input
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="Email"
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
+
+          <select
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+          >
+            <option value="">Select role</option>
+            <option>Frontend Developer</option>
+            <option>Backend Developer</option>
+            <option>UI/UX Designer</option>
+          </select>
+
+          <select
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <div className="flex justify-between mt-6">
+          <button
+            onClick={handleDelete}
+            className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
+          >
+            Delete
+          </button>
+
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+          >
+            Save Changes
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+
+
